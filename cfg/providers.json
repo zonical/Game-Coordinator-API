@@ -1,0 +1,30 @@
+{
+    "creators.tf": 
+    {
+        "url": "https://creators.tf/api/IServers/GServerList?provider=15",
+        "enabled": true,
+
+        "names": [
+            "creators", "creators.tf", "c.tf"
+        ],
+
+        "regions": [
+            "us", "eu", "ru", "au", "sg"
+        ]
+    },
+    "creators.tf/balancemod":
+    {
+        "url": "https://creators.tf/api/IServers/GServerList?provider=1756",
+        "enabled": true,
+
+        "names": [
+            "creators/balance", "creators.tf/balance", "c.tf/balance",
+            "creators/balancemod", "creators.tf/balancemod", "c.tf/balancemod",
+            "balance", "balancemod"
+        ],
+
+        "regions": [
+            "us", "eu", "kr", "sg"
+        ]
+    }
+}
