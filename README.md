@@ -4,7 +4,10 @@ A Game Coordinator API service for TF2 Community Servers.
 ## Installation and Usage:
 
 1. Install the latest version of Python. (Tested with Python 3.8)
-2. Configure the */cfg/providers.json* file. This file contains all of the information that is required to add a provier to the Game Coordinator. The format is as follows:
+2. Install the [A2S module](https://pypi.org/project/python-a2s/) with 
+```pip3 install python-a2s```
+
+3. Configure the */cfg/providers.json* file. This file contains all of the information that is required to add a provier to the Game Coordinator. The format is as follows:
 ```
 {
     "<main_provider_name>": 
