@@ -73,6 +73,9 @@ def InitGameServers():
             provider_jsonObj = jsonObj[provider]
             print(provider_jsonObj)
 
+            if provider_jsonObj["enabled"] == False:
+                continue
+
             #Create our provider object.
             provider_ClassObj = Provider()
 

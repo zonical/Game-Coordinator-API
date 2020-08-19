@@ -7,11 +7,11 @@ from datetime import datetime
 import threading
 
 import a2s
-
 import logging
 logging.basicConfig(filename='example.log',level=logging.DEBUG)
 
-from api_serverhandling import InitGameServers, Server
+from api_serverhandling import InitGameServers, Server, listofProviders
+from api_commands import GCAPI_FindServerCommand
 
 class GameCoordinator_Exception(BaseException):
     pass
@@ -117,133 +117,11 @@ class GameCoordinator_API:
         #Send.
         return json.dumps(message, indent=4)
 
-    async def GCAPI_FindServerCommand(self, websocket, jsonObj):
-        sender = jsonObj["sender"]
-        print(f"[API] Find server command activated by: {sender}")
-
-        try:
-            #Dict of all the information we need of this lobby.
-            findinformation = jsonObj["find_information"]
-
-            #Assemble:
-            provider = findinformation["provider"]
-            region = findinformation["region"]
-            players = int(findinformation["players"])
-            gamemode_list = findinformation["gamemodes"]
-        except KeyError:
-            message = {
-                "sender": "GCAPI",
-                "commandrecv": "find",
-                "message": "Invalid paramaters.",
-                "code": 404,
-            }
-
-            #Send.
-            print(f"[API - FIND] Invalid parameters loaded.")
-            return json.dumps(message, indent=4)
-
-        #Print information.
-        print("[API - FIND]")
-        print("="*25)
-        print(f"{sender} Lobby information:")
-        print(f"Provider: {provider}")
-        print(f"Search Region: {region}")
-        print(f"Players in Lobby: {players}")
-        print(f"List of Gamemodes: {gamemode_list}")
-        print("="*25)
-
-        #Error Checking:
-        #Is this a valid provider?
-        if self.serverList.get(provider) == None:
-            message = {
-                "sender": "GCAPI",
-                "commandrecv": "find",
-                "message": f"Invalid paramater value: {provider}",
-                "code": 404,
-            }
-
-            #Send.
-            return json.dumps(message, indent=4)
-            
-        print(f"[API - FIND] Valid provider: {provider}")
-
-        #Do we have any gamemodes or maps?
-        if len(gamemode_list) <= 0:
-            message = {
-                "sender": "GCAPI",
-                "commandrecv": "find",
-                "message": "Invalid paramaters. No maps or gamemodes.",
-                "code": 404,
-            }
-
-            #Send.
-            return json.dumps(message, indent=4)
-
-        print("[API - FIND] Gamemodes and Maps are valid.")
-
-        #Okay, we're all good. Let's get going.
-        provider_serverlist = self.serverList[provider]
-        bestServer = Server() #Load a blank object for easy manipulation.
-
-        #Go through each server.
-        for server in provider_serverlist:
-            #Compare regions.
-            if server.ServerRegion != region: #Regions are not equal.
-                continue
-            
-            #Playercount check.
-            if server.ServerPlayers == server.ServerMaxPlayers: #The server is full.
-                continue
-            
-            #Go through each gamemode in the gamemode list and see if it's one we want.
-            acceptableGameMode = False
-
-            for gamemode in gamemode_list:
-                if gamemode == "":
-                    acceptableGameMode = True
-                    break
-
-                if server.ServerGameMode in gamemode: #Is this gamemode name contained in the server gamemode string?
-                    acceptableGameMode = True
-                    break
-            
-            if acceptableGameMode == False: #Couldn't find a gamemode.
-                continue
-            
-            #We've passed all of these checks so this server is possibly good, is it the one with the most players though?
-            if server.ServerPlayers > bestServer.ServerPlayers:
-                bestServer = server
-        
-        print(f"[API] Best server!: {bestServer}, {bestServer.ServerPlayers}/{bestServer.ServerMaxPlayers}, {bestServer.ServerMap}")
-
-        message = {
-           "sender": "GCAPI",
-           "commandrecv": "find",
-           
-           "find_information":
-           {
-                "provider": bestServer.ServerProviderName,
-                "servername": bestServer.ServerName,
-                "serverip": bestServer.ServerIP,
-                "serverport": bestServer.ServerPort,
-                "region": bestServer.ServerRegion,
-                "players": bestServer.ServerPlayers,
-                "maxplayers": bestServer.ServerMaxPlayers,
-                "map": bestServer.ServerMap,
-                "gamemode": bestServer.ServerGameMode,
-           },
-
-           "code": 200,
-        }
-
-        #Send.
-        return json.dumps(message, indent=4)
 
     #Main loop that handles searching for servers.
     def GCAPI_ServerSearch(self):
         while True:
             try:
-                #Go through each provider..
                 for provider in self.serverList:
                     provider_serverlist = self.serverList[provider]
 

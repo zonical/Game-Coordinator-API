@@ -14,10 +14,10 @@ async def hello():
 
          "find_information":
          {
-            "provider": "creators.tf",
-            "region": "eu",
+            "provider": "creators",
+            "region": "us",
             "players": "1",
-            "gamemodes": [""],
+            "gamemodes": ["pl", "koth", "cp"],
          }
       }
 

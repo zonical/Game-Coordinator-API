@@ -1,6 +1,6 @@
 {
     "creators.tf": 
-    {
+    { 
         "url": "https://creators.tf/api/IServers/GServerList?provider=15",
         "enabled": true,
 
