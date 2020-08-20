@@ -27,9 +27,10 @@ A Game Coordinator API service for TF2 Community Servers.
     },
 }
 ```
-3. Run *api-main.py*. By default, it binds to *localhost:8765*. This can be changed on line 41:
+3. Run *api-main.py*. When creating the GameCoordinator_API class, ```__init__()``` will ask for a tuple with the IP address and the port. For example:
 ```python
-server = websockets.serve(self.GCAPI_MessageHandler, "localhost", 8765)
+#Create the class.
+GameCoordinator = GameCoordinator_API(("localhost", 8765))
 ```
 
 ## Connecting to the API:
@@ -45,10 +46,10 @@ url = "ws://localhost:8765"
 ```
 
 ### Rate Limiting.
-Rate-Limiting is also built into the main application. Each IP-Address can only send 30 messages per minute. Clients will be automatically disconnected without a response if they exceed this limit. This can be changed on line 70:
+Rate-Limiting is also built into the main application. Each IP-Address can only send 30 messages per minute. Clients will be automatically disconnected if this limit is reached. This can be changed with the variable in GameCoordinator_API:
 ```python
 ...
-if connectorInfo[0] >= 30: #30 messages per minute.
+ratelimit_HookValue = 30 #By default, the value for rate limiting is 30.
 ...
 ```
 
@@ -87,4 +88,5 @@ This is a message you could possibly get back:
         "gamemode": "pl"
     },
     "code": 200
-}```
+}
+```
