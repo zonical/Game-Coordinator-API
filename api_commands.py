@@ -24,7 +24,7 @@ async def GCAPI_FindServerCommand(self, websocket, jsonObj):
             "sender": "GCAPI",
             "commandrecv": "find",
             "message": "Invalid paramaters.",
-            "code": 404,
+            "code": 400,
         }
 
         #Send.
@@ -58,7 +58,7 @@ async def GCAPI_FindServerCommand(self, websocket, jsonObj):
             "sender": "GCAPI",
             "commandrecv": "find",
             "message": f"Invalid paramater value: {provider}",
-            "code": 404,
+            "code": 400,
         }
 
         #Send.
@@ -73,7 +73,7 @@ async def GCAPI_FindServerCommand(self, websocket, jsonObj):
             "sender": "GCAPI",
             "commandrecv": "find",
             "message": "Invalid paramaters. No maps or gamemodes.",
-            "code": 404,
+            "code": 400,
         }
 
         #Send.

@@ -7,25 +7,26 @@ import json
 
 async def hello():
    uri = "ws://localhost:8765"
-   async with websockets.connect(uri) as websocket:
-      message = {
-         "sender": "ClientExample",
-         "command": "find",
+   while True:
+      async with websockets.connect(uri) as websocket:
+         message = {
+            "sender": "ClientExample",
+            "command": "find",
 
-         "find_information":
-         {
-            "provider": "creators",
-            "region": "us",
-            "players": "1",
-            "gamemodes": ["pl", "koth", "cp"],
+            "find_information":
+            {
+               "provider": "creators",
+               "region": "eu",
+               "players": "1",
+               "gamemodes": ["pl", "koth", "cp"],
+            }
          }
-      }
 
-      messageStr = json.dumps(message, indent=4)
-      print(message)
-      await websocket.send(messageStr)
+         messageStr = json.dumps(message, indent=4)
+         print(message)
+         await websocket.send(messageStr)
 
-      recv = await websocket.recv()
-      print(recv)
+         recv = await websocket.recv()
+         print(recv)
 
 asyncio.get_event_loop().run_until_complete(hello())

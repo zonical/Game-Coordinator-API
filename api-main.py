@@ -16,16 +16,18 @@ from api_commands import GCAPI_FindServerCommand
 class GameCoordinator_Exception(BaseException):
     pass
 
+#The Game Coordinator API. This will handle searching for servers, processing lobbies and sending
+#clients information about the best server to join.
 class GameCoordinator_API:
-    #The Game Coordinator API. This will handle searching for servers, processing lobbies and sending
-    #clients information about the best server to join.
-    thread = None
-    serverList = {}
+    thread = None #Dedicated server searching thread.
+    serverList = {} #{provider name (e.g "creators.tf"), server obj}
+    connections = {} #{ip address, list}
 
-    connections = {}
+    ratelimit_HookValue = 30 #By default, the value for rate limiting is 30.
+    ipaddress = () #The IP and port used to connect.
 
     #Initalises the Game Coordinator API.
-    def __init__(self):
+    def __init__(self, bindAddress):
         #Create server.
         print("Creating Game Coordinator Server.")
 
@@ -36,9 +38,11 @@ class GameCoordinator_API:
         self.thread = threading.Thread(target=self.GCAPI_ServerSearch)
         self.thread.start()
 
-        #Create event loop.
-        print("Starting server...")
-        server = websockets.serve(self.GCAPI_MessageHandler, "localhost", 8765)
+        #Create the server.
+        self.ipaddress = bindAddress
+        print(f"Starting server... Binding to: {self.ipaddress}")
+
+        server = websockets.serve(self.GCAPI_MessageHandler, self.ipaddress[0], self.ipaddress[1])
         asyncio.get_event_loop().run_until_complete(server)
         asyncio.get_event_loop().run_forever()
     
@@ -62,14 +66,27 @@ class GameCoordinator_API:
                 finalTime = connectorInfo[2] - connectorInfo[1] #Subtract the first time from the check time.
                 if finalTime.seconds/60 >= 1: #Over 1 minute?
                     connectorInfo[0] = 0                #Reset count to 0 to allow new messages.
-                    connectorInfo[1] = datetime.now()   #Reset check time to now.
+                    connectorInfo[1] = datetime.now()   #Reset the first time to now.
                     connectorInfo[2] = None             #Reset check time to nothing.
 
                 #We haven't gone over the 1 minute reset check.
-                #If we go over 30 connections with this IP, close.
-                if connectorInfo[0] >= 30:
-                    print(f"[API] {connector} is now being rate limited. > 30 connections between {connectorInfo[1]} -> {connectorInfo[2]}. Total connecton attempts: {connectorInfo[0]}.")
+                #If we go over X connections with this IP, close.
+                if connectorInfo[0] >= self.ratelimit_HookValue:
+                    #Send a message saying that you're being rate limited.
+                    if connectorInfo[0] == self.ratelimit_HookValue:
+                        message = {
+                            "sender": "GCAPI",
+                            "recv": message,
+                            "message": f"Too many connections.",
+                            "code": 400,
+                        }
+
+                        await websocket.send(json.dumps(message, indent=4))
+                    print(f"[API] {connector} is now being rate limited. > {self.ratelimit_HookValue} connections between {connectorInfo[1]} -> {connectorInfo[2]}. Total connecton attempts: {connectorInfo[0]}.")
+                    await websocket.close()
+
                     continue
+
             #If we don't have something already in our dict, add it.
             else:
                 startT = datetime.now()
@@ -77,8 +94,22 @@ class GameCoordinator_API:
 
             print(f"[API] Raw message received:\n{message}")
 
-            #Decode this message into JSON.
-            jsonObj = json.loads(message)
+            try:
+                #Decode this message into JSON.
+                jsonObj = json.loads(message)
+            except JSONDecodeError:
+                print(f"[API] Invalid message received.")
+                message = {
+                    "sender": "GCAPI",
+                    "recv": message,
+                    "message": "Invalid syntax.",
+                    "code": 400,
+                }
+                await websocket.send(json.dumps(message, indent=4))
+
+                #Close this connection.
+                await websocket.close()
+                continue
 
             #Whats our command?
             command = jsonObj["command"]
@@ -90,8 +121,10 @@ class GameCoordinator_API:
 
             #Not a valid command!
             else:
-                raise GameCoordinator_Exception("Command not recognized.")
                 self.GCAPI_HandleInvalidCommand(websocket, command)
+
+            #Close this connection.
+            await websocket.close()
     
     #Handles an invalid command.
     async def GCAPI_HandleInvalidCommand(self, websocket, commandsent):
@@ -99,7 +132,7 @@ class GameCoordinator_API:
             "sender": "GCAPI",
             "commandrecv": commandsent,
             "message": "Invalid command.",
-            "code": 404,
+            "code": 400,
         }
 
         #Send.
@@ -152,4 +185,4 @@ class GameCoordinator_API:
         
 
 #Create the class.
-GameCoordinator = GameCoordinator_API()
+GameCoordinator = GameCoordinator_API(("localhost", 8765))
